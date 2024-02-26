@@ -179,10 +179,33 @@ class Database {
       { $push: { "publications.$.comments": comment } }
     );
   };
+
+  public getCommentsUser = async (userId: string) => {
+    return await this.collection.aggregate([
+      {
+        $unwind: "$publications",
+      },
+      {
+        $unwind: "$publications.comments",
+      },
+      {
+        $match: {
+          "publications.comments.author": userId,
+        },
+      },
+      {
+        $project: {
+          text: "$publications.comments.text",
+          author: "$publications.comments.author"
+        },
+      }
+    ])
+  }
+
 }
 
 const requests = async () => {
-  const [followers, blocked, mostLiked, hasLiked, likePublication, comment] =
+  const [followers, blocked, mostLiked, hasLiked, likePublication, comment, commentsUser] =
     await Promise.all([
       conn.findFollowers(idUser),
       conn.findBlocked(idUser),
@@ -197,6 +220,7 @@ const requests = async () => {
         idPublication,
         "Mon super commentaire (je t'aime dua lipa)"
       ),
+      conn.getCommentsUser(idUser)
     ]);
 
   return {
@@ -206,6 +230,7 @@ const requests = async () => {
     hasLiked,
     likePublication,
     comment,
+    commentsUser
   };
 };
 
@@ -213,7 +238,7 @@ const conn = await Database.connect(URL, DATABASE);
 
 conn.setCollection("users");
 
-const { followers, blocked, mostLiked, hasLiked, likePublication, comment } =
+const { followers, blocked, mostLiked, hasLiked, likePublication, comment, commentsUser } =
   await requests();
 
 console.log(
@@ -232,3 +257,5 @@ console.log(
 );
 
 console.log(`Comment : ${comment}`);
+
+console.log(`Comments of user ${idUser} : ${commentsUser}`)

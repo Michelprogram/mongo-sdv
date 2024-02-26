@@ -6,6 +6,7 @@
     "start": "bun run index.ts"
   },
   "devDependencies": {
+    "@types/uuid": "^9.0.8",
     "bun-types": "latest"
   },
   "peerDependencies": {
